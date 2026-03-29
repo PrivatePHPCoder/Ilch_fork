@@ -205,3 +205,13 @@ war_access:
   -
     war_id: 4
     group_id: 1
+
+war_game_icon:
+  -
+    id: 1
+    title: "CSS"
+    icon: "icon_css123456"
+  -
+    id: 2
+    title: "Dota 2"
+    icon: "icon_dota789012"
