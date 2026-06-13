@@ -10,6 +10,21 @@ $wzMenuTpl = '<section class="wz-panel">
 $wzAccent = trim((string) $this->getLayoutSetting('accentcolor'));
 $wzHeader = $this->getLayoutSetting('headertext');
 $wzTagline = $this->getLayoutSetting('tagline');
+
+$wzShowHero  = $this->getLayoutSetting('showhero') === '1';
+$wzShowLeft  = $this->getLayoutSetting('showleftcol') === '1';
+$wzShowRight = $this->getLayoutSetting('showrightcol') === '1';
+$wzWide      = $this->getLayoutSetting('widecontainer') === '1';
+$wzSticky    = $this->getLayoutSetting('stickysidebars') === '1';
+
+$wzBodyClass = 'wz';
+$wzBodyClass .= $wzWide ? ' wz-wide' : '';
+$wzBodyClass .= $wzSticky ? '' : ' wz-no-sticky';
+$wzBodyClass .= $wzShowLeft ? '' : ' wz-nav-burger';
+
+$wzGridClass = 'wz-grid';
+$wzGridClass .= $wzShowLeft ? ' has-left' : '';
+$wzGridClass .= $wzShowRight ? ' has-right' : '';
 ?>
 <!DOCTYPE html>
 <html lang="de">
@@ -25,7 +40,7 @@ $wzTagline = $this->getLayoutSetting('tagline');
         <?php endif; ?>
         <?=$this->getCustomCSS() ?>
     </head>
-    <body class="wz">
+    <body class="<?=$wzBodyClass ?>">
         <div class="wz-fx" aria-hidden="true"></div>
 
         <div class="wz-topbar">
@@ -58,6 +73,7 @@ $wzTagline = $this->getLayoutSetting('tagline');
         </div>
         <div class="wz-backdrop" hidden></div>
 
+        <?php if ($wzShowHero) : ?>
         <section class="wz-hero" id="wzHero">
             <div class="wz-hero-track">
                 <div class="wz-slide is-active" style="background-image:url('<?=$this->getBaseUrl($this->getLayoutSetting('slider1')) ?>')" role="img" aria-label="<?=$this->getTrans('slider1') ?>"></div>
@@ -88,13 +104,16 @@ $wzTagline = $this->getLayoutSetting('tagline');
                 <button type="button" data-index="2" aria-label="<?=$this->getTrans('slide3') ?>"></button>
             </div>
         </section>
+        <?php endif; ?>
 
         <main class="wz-main">
             <div class="wz-container">
-                <div class="wz-grid">
+                <div class="<?=$wzGridClass ?>">
+                    <?php if ($wzShowLeft) : ?>
                     <aside class="wz-col wz-col-left">
                         <?=$this->getMenu(1, $wzMenuTpl) ?>
                     </aside>
+                    <?php endif; ?>
                     <div class="wz-col wz-col-main">
                         <nav class="wz-breadcrumb">
                             <span class="wz-breadcrumb-label"><?=$this->getTrans('missionpath') ?> //</span>
@@ -111,9 +130,11 @@ $wzTagline = $this->getLayoutSetting('tagline');
                             </div>
                         </section>
                     </div>
+                    <?php if ($wzShowRight) : ?>
                     <aside class="wz-col wz-col-right">
                         <?=$this->getMenu(2, $wzMenuTpl) ?>
                     </aside>
+                    <?php endif; ?>
                 </div>
             </div>
         </main>

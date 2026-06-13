@@ -39,6 +39,37 @@ class Config extends \Ilch\Config\Install
                 'default' => '#ff7a18',
                 'description' => 'accentcolordesc',
             ],
+            'sectionlayout' => [
+                'type' => 'separator',
+            ],
+            'showhero' => [
+                'type' => 'flipswitch',
+                'default' => '1',
+                'description' => 'showherodesc',
+            ],
+            'showleftcol' => [
+                'type' => 'flipswitch',
+                'default' => '1',
+                'description' => 'showleftcoldesc',
+            ],
+            'showrightcol' => [
+                'type' => 'flipswitch',
+                'default' => '1',
+                'description' => 'showrightcoldesc',
+            ],
+            'widecontainer' => [
+                'type' => 'flipswitch',
+                'default' => '0',
+                'description' => 'widecontainerdesc',
+            ],
+            'stickysidebars' => [
+                'type' => 'flipswitch',
+                'default' => '1',
+                'description' => 'stickysidebarsdesc',
+            ],
+            'sectionmedia' => [
+                'type' => 'separator',
+            ],
             'slider1' => [
                 'type' => 'mediaselection',
                 'default' => 'application/layouts/clan3columns/img/slider/slider_1.jpg',

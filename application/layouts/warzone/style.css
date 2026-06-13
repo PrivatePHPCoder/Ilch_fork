@@ -349,12 +349,26 @@ h1, h2, h3, h4, h5, h6 {
 .wz-main { padding: 34px 0 60px; }
 .wz-grid {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr) 250px;
+    grid-template-columns: minmax(0, 1fr);   /* Standard: einspaltig */
     gap: 24px;
     align-items: start;
 }
-.wz-grid--full { grid-template-columns: 250px minmax(0, 1fr); }
+/* Spaltenkombinationen je nach Layout-Setting */
+.wz-grid.has-left:not(.has-right) { grid-template-columns: 250px minmax(0, 1fr); }
+.wz-grid.has-right:not(.has-left) { grid-template-columns: minmax(0, 1fr) 250px; }
+.wz-grid.has-left.has-right       { grid-template-columns: 250px minmax(0, 1fr) 250px; }
+.wz-grid--full                    { grid-template-columns: 250px minmax(0, 1fr); }
 .wz-col-left, .wz-col-right { position: sticky; top: 92px; }
+
+/* Setting: Sticky-Sidebars aus */
+body.wz-no-sticky .wz-col-left,
+body.wz-no-sticky .wz-col-right { position: static; }
+
+/* Setting: breiter Container */
+body.wz-wide { --wz-maxw: 1760px; }
+
+/* Setting: linke Spalte aus -> Navigation per Burger auch im Desktop */
+body.wz-nav-burger .wz-burger { display: flex; }
 
 /* ---------------------------------------------------------------- Panel */
 .wz-panel {
