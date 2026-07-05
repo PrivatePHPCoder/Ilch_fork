@@ -5,14 +5,34 @@
 /** @var \Modules\User\Models\User[] $userCache */
 $userCache = $this->get('userCache');
 
+/** @var \Ilch\Validation|null $validationResult */
+$validationResult = $this->get('validation');
+
+/** @var int $remainingFloodSeconds */
+$remainingFloodSeconds = (int)$this->get('remainingFloodSeconds');
+
+/** @var \Ilch\Validation\ErrorBag|null $errorBag */
+$errorBag = $validationResult !== null ? $validationResult->getErrorBag() : null;
+
 /** @var \Ilch\Config\Database $config */
 $config = \Ilch\Registry::get('config');
 ?>
 <link href="<?=$this->getModuleUrl('../shoutbox/static/css/shoutbox.css') ?>" rel="stylesheet">
+<?=\Modules\Shoutbox\Libs\DesignCss::render() ?>
 <script>
     $(function() {
         let $shoutboxContainer = $('#shoutbox-container<?=$this->get('uniqid') ?>'),
+            reloadCaptcha = function() {
+                let $img = $shoutboxContainer.find('.shoutbox-captcha-image');
+
+                if ($img.length) {
+                    $img.attr('src', '<?=$this->getUrl() ?>/application/libraries/Captcha/Captcha.php?' + Math.random());
+                }
+            },
             showForm = function() {
+                // Reload the captcha so the visible image always matches the session value,
+                // even with multiple captchas on the page.
+                reloadCaptcha();
                 $("#shoutbox-button-container<?=$this->get('uniqid') ?>").slideUp(200, function() {
                     $("#shoutbox-form-container<?=$this->get('uniqid') ?>").slideDown(400);
                 });
@@ -21,7 +41,88 @@ $config = \Ilch\Registry::get('config');
                 $("#shoutbox-form-container<?=$this->get('uniqid') ?>").slideUp(400, function() {
                     $("#shoutbox-button-container<?=$this->get('uniqid') ?>").slideDown(200, afterHide);
                 });
+            },
+            floodTimer = null,
+            startFloodCountdown = function() {
+                let $floodAlert = $shoutboxContainer.find('.shoutbox-flood-alert');
+
+                if (floodTimer !== null) {
+                    clearInterval(floodTimer);
+                    floodTimer = null;
+                }
+
+                if (!$floodAlert.length) {
+                    return;
+                }
+
+                let remaining = parseInt($floodAlert.data('seconds'), 10);
+
+                floodTimer = setInterval(function() {
+                    remaining--;
+
+                    if (remaining <= 0) {
+                        clearInterval(floodTimer);
+                        floodTimer = null;
+                        $floodAlert.slideUp(300, function() {
+                            $(this).remove();
+                        });
+                    } else {
+                        $floodAlert.find('.shoutbox-flood-seconds').text(remaining);
+                    }
+                }, 1000);
+            },
+            autoRefreshPending = false,
+            refreshMessages = function() {
+                if (document.visibilityState === 'hidden' || autoRefreshPending) {
+                    return;
+                }
+
+                autoRefreshPending = true;
+                $.get('<?=$this->getUrl('shoutbox/index/ajax') ?>', function(html) {
+                    // parseHTML (keepScripts=false) prevents the inline script of the response from being executed again.
+                    let $newMessages = $($.parseHTML(html)).find('.shoutbox-messages').first(),
+                        $currentMessages = $shoutboxContainer.find('.shoutbox-messages').first();
+
+                    if ($newMessages.length && $currentMessages.length && $newMessages.html() !== $currentMessages.html()) {
+                        $currentMessages.html($newMessages.html());
+                    }
+                }).always(function() {
+                    autoRefreshPending = false;
+                });
             };
+
+        startFloodCountdown();
+
+        <?php if ((int)$this->get('autoRefreshInterval') > 0) : ?>
+        setInterval(refreshMessages, <?=(int)$this->get('autoRefreshInterval') ?> * 1000);
+        <?php endif; ?>
+
+        // Stop the countdown if the alert gets dismissed manually.
+        $shoutboxContainer.on('closed.bs.alert', '.shoutbox-flood-alert', function() {
+            if (floodTimer !== null) {
+                clearInterval(floodTimer);
+                floodTimer = null;
+            }
+        });
+
+        // Load a new captcha on demand.
+        $shoutboxContainer.on('click', '.shoutbox-captcha-reload', function() {
+            reloadCaptcha();
+            $shoutboxContainer.find('input[name=captcha]').val('').trigger('focus');
+        });
+
+        // Delete an own entry and refresh the list afterwards.
+        $shoutboxContainer.on('click', '.shoutbox-delete', function(ev) {
+            ev.preventDefault();
+
+            if (!confirm(<?=json_encode($this->getTrans('confirmDelete')) ?>)) {
+                return;
+            }
+
+            $.get($(this).attr('href')).always(function() {
+                refreshMessages();
+            });
+        });
 
 
         //slideup-down
@@ -46,6 +147,7 @@ $config = \Ilch\Registry::get('config');
                     let $htmlWithoutScript = $(html).filter('#shoutbox-container<?=$this->get('uniqid') ?>');
                     hideForm(function() {
                         $shoutboxContainer.html($htmlWithoutScript.html());
+                        startFloodCountdown();
                     });
                 }
             });
@@ -60,8 +162,12 @@ $config = \Ilch\Registry::get('config');
 
             if ($form.find('[name=shoutbox_name]').val() === '') {
                 alert(<?=json_encode($this->getTrans('missingName')) ?>);
-            } else if ($form.find('[name=shoutbox_textarea]').val() === '') {
+                return;
+            }
+
+            if ($form.find('[name=shoutbox_textarea]').val() === '') {
                 alert(<?=json_encode($this->getTrans('missingMessage')) ?>);
+                return;
             }
 
             <?php if ($this->get('googlecaptcha') && $this->get('googlecaptcha')->getVersion() === 3) : ?>
@@ -82,7 +188,21 @@ $config = \Ilch\Registry::get('config');
         });
     });
 </script>
-<div id="shoutbox-container<?=$this->get('uniqid') ?>">
+<div id="shoutbox-container<?=$this->get('uniqid') ?>" class="shoutbox-box">
+    <?php if ($validationResult !== null && !$validationResult->isValid()) : ?>
+        <div class="alert alert-danger alert-dismissible">
+            <?php foreach ($validationResult->getErrorBag()->getErrorMessages() as $errorMessage) : ?>
+                <div><?=$this->escape($errorMessage) ?></div>
+            <?php endforeach; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
+    <?php if ($remainingFloodSeconds > 0) : ?>
+        <div class="alert alert-warning alert-dismissible shoutbox-flood-alert" data-seconds="<?=$remainingFloodSeconds ?>">
+            <?=$this->getTrans('floodProtection', '<span class="shoutbox-flood-seconds">' . $remainingFloodSeconds . '</span>') ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <?php endif; ?>
     <div id="shoutbox-button-container<?=$this->get('uniqid') ?>">
         <div class="row mb-3">
             <div class="col-xl-12">
@@ -117,17 +237,18 @@ $config = \Ilch\Registry::get('config');
                                placeholder="Bot" />
                     </div>
                 </div>
-                <div class="row mb-3<?=$this->validation()->hasError('shoutbox_name') ? ' has-error' : '' ?>">
+                <div class="row mb-3<?=($errorBag !== null && $errorBag->hasError('shoutbox_name')) ? ' has-error' : '' ?>">
                     <div class="col-xl-12">
                         <input type="text"
                                class="form-control"
                                name="shoutbox_name"
                                placeholder="Name"
+                               maxlength="100"
                                value="<?=($this->getUser() !== null) ? $this->escape($this->getUser()->getName()) : '' ?>"
                                <?=($this->getUser() !== null) ? 'readonly' : 'required' ?> />
                     </div>
                 </div>
-                <div class="row mb-3<?=$this->validation()->hasError('shoutbox_textarea') ? ' has-error' : '' ?>">
+                <div class="row mb-3<?=($errorBag !== null && $errorBag->hasError('shoutbox_textarea')) ? ' has-error' : '' ?>">
                     <div class="col-xl-12">
                         <textarea class="form-control"
                                   style="resize: vertical"
@@ -142,7 +263,28 @@ $config = \Ilch\Registry::get('config');
                 <div class="row mb-3">
                     <div class="col-xl-12">
                         <?php if ($this->get('captchaNeeded') && $this->get('defaultcaptcha')) : ?>
-                            <?=$this->get('defaultcaptcha')->getCaptcha($this) ?>
+                            <div class="row mb-3<?=($errorBag !== null && $errorBag->hasError('captcha')) ? ' has-error' : '' ?>">
+                                <div class="col-xl-12 mb-2">
+                                    <img src="<?=$this->getUrl() ?>/application/libraries/Captcha/Captcha.php"
+                                         class="shoutbox-captcha-image"
+                                         alt="<?=$this->getTrans('captcha') ?>">
+                                </div>
+                                <div class="col-xl-12">
+                                    <div class="input-group">
+                                        <input type="text"
+                                               class="form-control"
+                                               name="captcha"
+                                               autocomplete="off"
+                                               placeholder="<?=$this->getTrans('captcha') ?>"
+                                               required>
+                                        <span class="input-group-text">
+                                            <a href="javascript:void(0)" class="shoutbox-captcha-reload" title="<?=$this->getTrans('reloadCaptcha') ?>">
+                                                <i class="fa-solid fa-arrows-rotate"></i>
+                                            </a>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         <?php endif; ?>
                         <div class="float-start">
                             <?php
@@ -168,30 +310,44 @@ $config = \Ilch\Registry::get('config');
         </div>
     <?php endif; ?>
 
-    <div class="shoutbox table-responsive">
+    <div class="shoutbox shoutbox-messages table-responsive">
         <table class="table table-bordered table-striped">
             <?php if (!empty($this->get('shoutbox'))) : ?>
+                <?php $currentUser = $this->getUser(); ?>
                 <?php
                 /** @var \Modules\Shoutbox\Models\Shoutbox $shoutbox */
                 foreach ($this->get('shoutbox') as $shoutbox) : ?>
-                    <?php $user = $userCache[$shoutbox->getUid()] ?>
+                    <?php $user = $userCache[$shoutbox->getUid()] ?? null ?>
                     <?php $date = new \Ilch\Date($shoutbox->getTime()) ?>
+                    <?php $canDelete = $currentUser !== null && ($shoutbox->getUid() === $currentUser->getId() || $currentUser->isAdmin()); ?>
+                    <?php
+                    $deleteIcon = '';
+                    if ($canDelete) {
+                        $deleteIcon = '<a href="' . $this->getUrl(['module' => 'shoutbox', 'controller' => 'index', 'action' => 'delete', 'id' => $shoutbox->getId()], null, true) . '"'
+                            . ' class="float-end shoutbox-delete text-danger" title="' . $this->getTrans('deleteOwnPost') . '">'
+                            . '<i class="fa-solid fa-trash-can"></i></a>';
+                    }
+                    ?>
                     <tr>
                         <?php if ($shoutbox->getUid() == '0' || empty($user)) : ?>
                             <td>
+                                <?=$deleteIcon ?>
                                 <b><?=$this->escape($shoutbox->getName()) ?>:</b><br />
                                 <span class="small"><?=$date->format('d.m.Y H:i', true) ?></span>
                             </td>
                         <?php else : ?>
                             <td>
-                                <img class="avatar" src="<?=$this->getStaticUrl() . '../' . $user->getAvatar() ?>" alt="<?=$this->escape($user->getName()) ?>">
+                                <?=$deleteIcon ?>
+                                <?php if ($config->get('shoutbox_showAvatars') !== '0') : ?>
+                                    <img class="avatar" src="<?=$this->getStaticUrl() . '../' . $user->getAvatar() ?>" alt="<?=$this->escape($user->getName()) ?>">
+                                <?php endif; ?>
                                 <b><a href="<?=$this->getUrl('user/profil/index/user/' . $user->getId()) ?>"><?=$this->escape($user->getName()) ?></a></b>:<br />
                                 <span class="small"><?=$date->format('d.m.Y H:i', true) ?></span>
                             </td>
                         <?php endif; ?>
                     </tr>
                     <tr>
-                        <td class="shoutbox-text"><?=$this->escape($shoutbox->getTextarea()) ?></td>
+                        <td class="shoutbox-text"><?=\Modules\Shoutbox\Libs\TextFormatter::format($shoutbox->getTextarea()) ?></td>
                     </tr>
                 <?php endforeach; ?>
             <?php else : ?>
