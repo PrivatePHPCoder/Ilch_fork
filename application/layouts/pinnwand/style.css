@@ -1,0 +1,573 @@
+/*
+ * Pinnwand — Das digitale Vereinsheim
+ * Layout für Ilch 2. Korkwand, Kreidetafel, angepinnte Notizen.
+ */
+
+/* ---------- Schrift ---------- */
+
+@font-face {
+    font-family: 'Caveat';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/caveat-latin.woff2') format('woff2');
+}
+
+/* ---------- Token ---------- */
+
+:root {
+    --pw-kork: #b9885a;
+    --pw-kork-dunkel: #8a5c33;
+    --pw-tafel: #2e4a3f;
+    --pw-tafel-dunkel: #24382f;
+    --pw-kreide: #f2efe6;
+    --pw-papier: #fdfbf4;
+    --pw-papier-hell: #fffef9;
+    --pw-zettel-gelb: #fdf3bf;
+    --pw-tinte: #33302b;
+    --pw-tinte-hell: #6d6559;
+    --pw-kuli: #1f5aa8;
+    --pw-kuli-dunkel: #16436f;
+    --pw-nadel-rot: #c3423f;
+    --pw-nadel-blau: #2f6b8f;
+    --pw-nadel-gruen: #4a7c48;
+    --pw-holz-hell: #9a6a3e;
+    --pw-holz-dunkel: #5f3a1b;
+    --pw-linie: #e3dcc9;
+    --pw-hand: 'Caveat', 'Segoe Script', cursive;
+    --pw-schatten-zettel: 0 12px 18px -10px rgba(56, 33, 12, 0.55), 0 2px 4px rgba(56, 33, 12, 0.25);
+}
+
+/* ---------- Grundfläche: die Korkwand ---------- */
+
+body.pinnwand {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    color: var(--pw-tinte);
+    font-family: 'Segoe UI', 'Noto Sans', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 0.95rem;
+    background-color: var(--pw-kork);
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.12' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='0.10'/%3E%3C/svg%3E"),
+        radial-gradient(1300px 700px at 15% -10%, rgba(255, 233, 200, 0.28), transparent 60%),
+        radial-gradient(1100px 800px at 95% 115%, rgba(70, 38, 14, 0.35), transparent 65%);
+}
+
+.skip-link {
+    position: absolute;
+    left: -999px;
+    top: 0;
+    z-index: 1100;
+    padding: 0.5rem 1rem;
+    background: var(--pw-papier);
+    color: var(--pw-kuli);
+}
+
+.skip-link:focus {
+    left: 0.5rem;
+    top: 0.5rem;
+}
+
+a {
+    color: var(--pw-kuli);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+}
+
+a:hover {
+    color: var(--pw-kuli-dunkel);
+    text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+    outline: 3px solid var(--pw-kuli);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ---------- Kreidetafel (Header) ---------- */
+
+.chalkboard-wrap {
+    padding-top: 1.75rem;
+}
+
+.chalkboard {
+    position: relative;
+    text-align: center;
+    padding: 2.2rem 1.5rem 2.6rem;
+    background-color: var(--pw-tafel);
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='k'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23k)' opacity='0.05' fill='white'/%3E%3C/svg%3E"),
+        radial-gradient(90% 120% at 50% 20%, rgba(255, 255, 255, 0.06), transparent 55%),
+        radial-gradient(120% 160% at 50% 110%, rgba(0, 0, 0, 0.35), transparent 60%);
+    border: 10px solid;
+    border-image: linear-gradient(175deg, var(--pw-holz-hell), var(--pw-holz-dunkel)) 1;
+    border-radius: 4px;
+    box-shadow:
+        inset 0 0 40px rgba(0, 0, 0, 0.35),
+        0 14px 24px -12px rgba(40, 22, 6, 0.7);
+}
+
+.chalkboard .site-name {
+    margin: 0;
+    font-family: var(--pw-hand);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.8rem);
+    line-height: 1.1;
+    color: var(--pw-kreide);
+    text-shadow: 0 0 8px rgba(242, 239, 230, 0.35);
+    transform: rotate(-1.4deg);
+}
+
+.chalkboard .site-name::after {
+    content: '';
+    display: block;
+    width: min(260px, 60%);
+    height: 12px;
+    margin: 0.2rem auto 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='12' viewBox='0 0 260 12'%3E%3Cpath d='M4 8 C 60 2, 120 11, 180 6 S 250 5, 256 7' fill='none' stroke='%23F2EFE6' stroke-width='3' stroke-linecap='round' opacity='0.8'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.chalkboard .site-sub {
+    margin: 0.6rem 0 0;
+    font-family: var(--pw-hand);
+    font-weight: 400;
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    color: var(--pw-kreide);
+    opacity: 0.82;
+    transform: rotate(-0.6deg);
+}
+
+/* Kreidestück und Schwamm auf der Ablage */
+
+.chalkboard .chalk-piece,
+.chalkboard .chalk-sponge {
+    position: absolute;
+    bottom: -7px;
+    border-radius: 2px;
+}
+
+.chalkboard .chalk-piece {
+    left: 14%;
+    width: 46px;
+    height: 9px;
+    background: linear-gradient(#fbf9f2, #d9d5c6);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
+    transform: rotate(-2deg);
+}
+
+.chalkboard .chalk-sponge {
+    right: 12%;
+    width: 64px;
+    height: 14px;
+    bottom: -9px;
+    background: linear-gradient(#7d94a8, #4e5f6e);
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+    transform: rotate(1.5deg);
+}
+
+/* Mobile Navigation */
+
+.chalk-toggler {
+    margin-top: 1.2rem;
+    padding: 0.35rem 1.1rem;
+    font-family: var(--pw-hand);
+    font-size: 1.35rem;
+    color: var(--pw-kreide);
+    background: transparent;
+    border: 2px dashed rgba(242, 239, 230, 0.65);
+    border-radius: 6px;
+}
+
+.chalk-toggler:hover {
+    background: rgba(242, 239, 230, 0.1);
+    color: var(--pw-kreide);
+}
+
+.mobile-board {
+    padding-top: 1.75rem;
+}
+
+/* ---------- Die Wand mit den Aushängen ---------- */
+
+.board {
+    flex: 1 0 auto;
+    padding: 2.75rem 0 1rem;
+}
+
+/* Angepinnte Notiz */
+
+.note {
+    position: relative;
+    margin-bottom: 1.9rem;
+    padding: 1.15rem 1.15rem 1.25rem;
+    background-color: var(--pw-papier-hell);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.05'/%3E%3C/svg%3E");
+    border-radius: 2px;
+    box-shadow: var(--pw-schatten-zettel);
+    transform: rotate(-0.9deg);
+    transition: transform 0.15s ease;
+}
+
+.note:nth-of-type(even) {
+    transform: rotate(1deg);
+}
+
+.note:nth-of-type(3n) {
+    background-color: var(--pw-zettel-gelb);
+}
+
+.note:hover {
+    transform: rotate(0deg) translateY(-2px);
+}
+
+.note-pin {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    width: 17px;
+    height: 17px;
+    margin-left: -9px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ea948b, var(--pw-nadel-rot) 55%, #7e2320);
+    box-shadow:
+        0 7px 6px -3px rgba(56, 22, 8, 0.5),
+        inset 0 -2px 3px rgba(0, 0, 0, 0.25);
+}
+
+.note:nth-of-type(even) .note-pin {
+    background: radial-gradient(circle at 35% 30%, #7fb2d1, var(--pw-nadel-blau) 55%, #1d4459);
+}
+
+.note:nth-of-type(3n) .note-pin {
+    background: radial-gradient(circle at 35% 30%, #92c290, var(--pw-nadel-gruen) 55%, #2d4f2c);
+}
+
+.note-title {
+    margin: 0 0 0.6rem;
+    padding-bottom: 0.25rem;
+    font-family: var(--pw-hand);
+    font-weight: 600;
+    font-size: 1.6rem;
+    color: #3b342c;
+    border-bottom: 2px solid rgba(59, 52, 44, 0.18);
+    transform: rotate(-0.4deg);
+}
+
+.note-body {
+    font-size: 0.92rem;
+}
+
+/* Menülisten auf den Notizen */
+
+.note .ilch_menu_ul {
+    margin: 0;
+}
+
+.note .ilch_menu_ul li {
+    border-bottom: 1px dotted #c9c0ad;
+}
+
+.note .ilch_menu_ul li:last-child {
+    border-bottom: 0;
+}
+
+.note .ilch_menu_ul li a {
+    display: block;
+    padding: 0.4rem 0.15rem;
+    text-decoration: none;
+}
+
+.note .ilch_menu_ul li a:hover {
+    text-decoration: underline;
+}
+
+.note .ilch_menu_ul .ilch_menu_ul {
+    padding-left: 1rem;
+}
+
+.note .ilch_menu_ul li.ist-aktiv > a {
+    font-weight: 600;
+}
+
+.note .ilch_menu_ul li.ist-aktiv > a::before {
+    content: '\2192\00a0';
+    color: var(--pw-nadel-rot);
+}
+
+/* ---------- Der große Papierbogen (Inhalt) ---------- */
+
+.sheet {
+    position: relative;
+    background-color: var(--pw-papier);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.04'/%3E%3C/svg%3E");
+    border-radius: 2px;
+    box-shadow:
+        0 18px 28px -14px rgba(56, 33, 12, 0.6),
+        0 3px 6px rgba(56, 33, 12, 0.22);
+}
+
+.sheet-clip {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    width: 120px;
+    height: 28px;
+    margin-left: -60px;
+    background: linear-gradient(#e2e2dc, #96968c);
+    border-radius: 14px;
+    box-shadow:
+        0 3px 5px rgba(40, 25, 8, 0.45),
+        inset 0 1px 2px rgba(255, 255, 255, 0.7);
+}
+
+.sheet-clip::after {
+    content: '';
+    position: absolute;
+    inset: 7px 38px;
+    background: var(--pw-papier);
+    border-radius: 8px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.sheet-inner {
+    padding: 2.4rem 2rem 2.2rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.note-body {
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+/* Breadcrumb als Papierstreifen */
+
+.pinnwand .breadcrumb {
+    display: inline-flex;
+    margin-bottom: 1.1rem;
+    padding: 0.35rem 0.9rem;
+    background: var(--pw-papier-hell);
+    border-radius: 2px;
+    box-shadow: 0 4px 8px -4px rgba(56, 33, 12, 0.5);
+    transform: rotate(-0.5deg);
+    font-size: 0.85rem;
+}
+
+.pinnwand .breadcrumb-item.active {
+    color: var(--pw-tinte-hell);
+}
+
+/* ---------- Inhaltstypografie & Bootstrap-Umgestaltung ---------- */
+
+.sheet-inner h1,
+.sheet-inner h2,
+.sheet-inner h3 {
+    color: #2b2620;
+}
+
+.sheet-inner h1 {
+    font-size: 1.7rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--pw-linie);
+}
+
+.sheet-inner h2 {
+    font-size: 1.35rem;
+}
+
+.sheet-inner h3 {
+    font-size: 1.15rem;
+}
+
+.pinnwand hr {
+    border-top: 1px solid var(--pw-linie);
+    opacity: 1;
+}
+
+.pinnwand .card {
+    background: var(--pw-papier-hell);
+    border: 1px solid var(--pw-linie);
+    box-shadow: none;
+}
+
+.pinnwand .card-header {
+    background: #f4eeda;
+    border-bottom: 1px solid var(--pw-linie);
+    font-weight: 600;
+}
+
+.pinnwand .table {
+    color: var(--pw-tinte);
+    border-color: var(--pw-linie);
+}
+
+.pinnwand .table > :not(caption) > * > * {
+    background: transparent;
+}
+
+.pinnwand .table thead th {
+    border-bottom: 2px solid #cfc5ae;
+}
+
+.pinnwand .table-striped > tbody > tr:nth-of-type(odd) > * {
+    background: rgba(214, 199, 165, 0.16);
+}
+
+.pinnwand .table-hover > tbody > tr:hover > * {
+    background: rgba(31, 90, 168, 0.06);
+}
+
+/* Formulare: Tinte auf Papier */
+
+.pinnwand .form-control,
+.pinnwand .form-select {
+    background: var(--pw-papier-hell);
+    color: var(--pw-tinte);
+    border: 1px solid #cfc5ae;
+    border-radius: 3px;
+}
+
+.pinnwand .form-control:focus,
+.pinnwand .form-select:focus {
+    background: #ffffff;
+    border-color: var(--pw-kuli);
+    box-shadow: 0 0 0 0.2rem rgba(31, 90, 168, 0.15);
+}
+
+/* Buttons: Stempel */
+
+.pinnwand .btn {
+    border-radius: 3px;
+}
+
+.pinnwand .btn-primary,
+.pinnwand .btn-success {
+    background: var(--pw-tafel);
+    border-color: var(--pw-tafel-dunkel);
+    color: var(--pw-kreide);
+}
+
+.pinnwand .btn-primary:hover,
+.pinnwand .btn-primary:focus,
+.pinnwand .btn-success:hover,
+.pinnwand .btn-success:focus {
+    background: var(--pw-tafel-dunkel);
+    border-color: #1b2b24;
+    color: var(--pw-kreide);
+}
+
+.pinnwand .btn-secondary,
+.pinnwand .btn-default,
+.pinnwand .btn-light {
+    background: var(--pw-papier-hell);
+    border-color: #cfc5ae;
+    color: var(--pw-tinte);
+}
+
+.pinnwand .btn-secondary:hover,
+.pinnwand .btn-default:hover,
+.pinnwand .btn-light:hover {
+    background: #f1ead6;
+    border-color: #b9ad92;
+    color: var(--pw-tinte);
+}
+
+.pinnwand .btn-danger {
+    background: var(--pw-nadel-rot);
+    border-color: #9c322f;
+}
+
+.pinnwand .pagination .page-link {
+    color: var(--pw-kuli);
+    background: var(--pw-papier-hell);
+    border-color: var(--pw-linie);
+}
+
+.pinnwand .pagination .active .page-link {
+    background: var(--pw-tafel);
+    border-color: var(--pw-tafel-dunkel);
+    color: var(--pw-kreide);
+}
+
+.pinnwand .alert {
+    border-radius: 2px;
+}
+
+.pinnwand .badge {
+    border-radius: 2px;
+}
+
+/* ---------- Holzleiste (Footer) ---------- */
+
+.ledge-footer {
+    margin-top: 3rem;
+    padding: 1.4rem 0;
+    color: var(--pw-kreide);
+    background: linear-gradient(178deg, var(--pw-holz-hell), var(--pw-holz-dunkel));
+    box-shadow: inset 0 6px 10px -6px rgba(0, 0, 0, 0.55);
+    font-size: 0.9rem;
+}
+
+.ledge-footer a {
+    color: var(--pw-kreide);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+
+.ledge-footer a:hover {
+    color: #ffffff;
+    text-decoration: underline solid;
+}
+
+.ledge-footer .ledge-note {
+    font-family: var(--pw-hand);
+    font-size: 1.25rem;
+    margin-right: 0.35rem;
+}
+
+.ledge-footer .ledge-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.5rem;
+    justify-content: flex-end;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* ---------- Responsiv & Bewegung ---------- */
+
+@media (max-width: 991.98px) {
+    .ledge-footer .ledge-links {
+        justify-content: flex-start;
+        margin-top: 0.5rem;
+    }
+
+    .sheet-inner {
+        padding: 2rem 1.1rem 1.6rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .sheet-inner .d-flex {
+        flex-wrap: wrap;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .note {
+        transition: none;
+    }
+
+    .note:hover {
+        transform: rotate(-0.9deg);
+    }
+
+    .note:nth-of-type(even):hover {
+        transform: rotate(1deg);
+    }
+}
