@@ -103,6 +103,12 @@ class Login
             return new LoginResult(false, $user, LoginResult::USER_LOCKED);
         }
 
+        // Session-Fixation verhindern: nach erfolgreicher Authentifizierung eine
+        // neue Session-ID vergeben, bevor die User-ID in der Session gesetzt wird.
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
+
         $selectsDelete = $user->getSelectsDelete();
         if ($selectsDelete != '' && $selectsDelete != '1000-01-01 00:00:00') {
             $this->mapper->selectsdelete($user->getId());
