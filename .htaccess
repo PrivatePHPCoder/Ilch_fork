@@ -1,0 +1,29 @@
+# Ilch 2 – .htaccess
+#
+# Hinweis: Der mod_rewrite-Block ("Mod Rewrite default lines") wird vom
+# Admin-Center (Einstellungen -> .htaccess) verwaltet und beim Speichern
+# automatisch ergaenzt bzw. entfernt. Die folgenden Sicherheitsregeln bleiben
+# beim Speichern erhalten, solange sie im Admin-Textfeld nicht geloescht werden.
+
+# Kein Directory-Listing.
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
+
+# Zugriff auf sensible Dateien unterbinden (VCS, Composer, Doku, Dumps).
+<FilesMatch "(^\.|composer\.(json|lock)|package(-lock)?\.json|\.(md|dist|ya?ml|ini|log|sql|sh|bak)$)">
+    Require all denied
+</FilesMatch>
+
+# Versteckte Verzeichnisse (.git, .github, ...) blockieren, .well-known erlauben.
+RedirectMatch 404 /\.(?!well-known)
+
+# Security-Header als Fallback fuer statische Dateien, die nicht durch
+# index.php laufen. "setifempty" setzt den Header nur, wenn er noch nicht
+# vorhanden ist – dynamische Antworten setzen ihn bereits in PHP, sodass es
+# hier zu keiner Header-Verdopplung kommt. (setifempty: Apache >= 2.4.7)
+<IfModule mod_headers.c>
+    Header setifempty X-Content-Type-Options "nosniff"
+    Header setifempty X-Frame-Options "SAMEORIGIN"
+    Header setifempty Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

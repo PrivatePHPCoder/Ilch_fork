@@ -43,6 +43,17 @@ session_set_cookie_params([
 ]);
 session_start();
 header('Content-Type: text/html; charset=utf-8');
+
+// Security-Header. Werden hier zentral gesetzt, weil jeder Request (inkl. Admin)
+// ueber diese index.php laeuft und die Header so unabhaengig von Apache-Modulen
+// oder der vom Admin verwalteten .htaccess wirken.
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: SAMEORIGIN');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+if (ISHTTPSPAGE) {
+    // HSTS nur ueber HTTPS senden (auf reinem HTTP wirkungslos bzw. unerwuenscht).
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
 $serverTimeZone = @date_default_timezone_get();
 date_default_timezone_set('UTC');
 
