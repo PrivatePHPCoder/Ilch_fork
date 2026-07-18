@@ -158,6 +158,9 @@ abstract class Base
         $this->purifierConfig->set('AutoFormat.Linkify', true);
         // Had to be enabled to allow the output of the media embed plugin of CKEditor 5.
         $this->purifierConfig->set('CSS.Trusted', true);
+        // Allow "tricky" CSS properties like "display". The media embed plugin of CKEditor 5
+        // uses "display: block;" for the iframe of embedded videos.
+        $this->purifierConfig->set('CSS.AllowTricky', true);
         $def = $this->purifierConfig->getHTMLDefinition(true);
         $def->addAttribute('iframe', 'allowfullscreen', 'Bool');
         // Settings to allow (most of) the output of the media embed plugin of CKEditor 5.
@@ -185,6 +188,17 @@ abstract class Base
             'src' => new EmbedUrlDef(),
             'type' => 'Text',
         ));
+
+        // Workaround for HTMLPurifier mangling "aspect-ratio: 16 / 9" to the invalid "aspect-ratio:16 9".
+        // Its CSS_Multiple wrapper splits the value at spaces and drops the "/". CSS_Ratio itself
+        // handles "16 / 9" correctly, so replace the definition with one without the wrapper.
+        // The media embed plugin of CKEditor 5 uses "aspect-ratio: 16 / 9;" for embedded videos.
+        $cssDef = $this->purifierConfig->getCSSDefinition();
+        $cssDef->info['aspect-ratio'] = new \HTMLPurifier_AttrDef_CSS_Composite([
+            new \HTMLPurifier_AttrDef_CSS_Ratio(),
+            new \HTMLPurifier_AttrDef_Enum(['auto']),
+        ]);
+
         $this->purifier = new \HTMLPurifier($this->purifierConfig);
     }
 
