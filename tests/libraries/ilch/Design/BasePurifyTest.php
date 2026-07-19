@@ -452,6 +452,20 @@ class BasePurifyTest extends TestCase
     }
 
     /**
+     * Media embed (CKEditor 5): Newer versions of CKEditor 5 create different embed code.
+     * This embed code includes "aspect-ratio: 16 / 9", which HTMLPurifier 4.19 mangles.
+     * A workaround was implemented with Ilch 2.2.18.
+     *
+     * @see https://github.com/IlchCMS/Ilch-2.0/pull/1450
+     * @return void
+     */
+    public function testPurifyEmbedMediaCK5AspectRatio()
+    {
+        $output = $this->view->purify('<figure class="media"><div data-oembed-url="https://www.youtube.com/watch?v=H08tGjXNHO4"><div><iframe src="https://www.youtube.com/watch?v=H08tGjXNHO4" width="1280" height="720" style="width: 100%; height: auto; aspect-ratio: 16 / 9; border: 0; display: block;" frameborder="0" allow="autoplay; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""></iframe></div></div></figure>');
+        self::assertEquals('<figure class="media"><div data-oembed-url="https://www.youtube.com/watch?v=H08tGjXNHO4"><div><iframe src="https://www.youtube.com/watch?v=H08tGjXNHO4" width="1280" height="720" style="width:100%;height:auto;aspect-ratio:16/9;border:0;display:block;" frameborder="0" allowfullscreen=""></iframe></div></div></figure>', $output);
+    }
+
+    /**
      * Media embed, but with not allowed URL. Should get filtered out. (CKEditor 5)
      *
      * @return void
